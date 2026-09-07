@@ -1,11 +1,14 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function Page() {
   // Estados para controlar os modais de login e cadastro
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+
+  const router = useRouter();
 
   return (
     <>
@@ -445,10 +448,10 @@ export default function Page() {
 
           {/* ÁREA DE AUTH / LOGIN */}
           <div className="auth-actions">
-            <button className="btn-link" onClick={() => setIsLoginOpen(true)}>
-              Entrar
+            <button className="btn-link" onClick={() => router.push("/login")}>
+              Entrar 
             </button>
-            <button className="btn btn-primary" onClick={() => setIsRegisterOpen(true)}>
+            <button className="btn btn-primary" onClick={() => router.push("/register")}>
               Criar Conta
             </button>
           </div>
