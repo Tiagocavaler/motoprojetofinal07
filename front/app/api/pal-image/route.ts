@@ -1,13 +1,29 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const key = searchParams.get('key');
-  if(!key) return new NextResponse('missing key', { status: 400 });
+  const fileName = searchParams.get('file');
+  if(!key && !fileName) return new NextResponse('missing key', { status: 400 });
 
+  // 1. Tenta local primeiro - você já tem 154 arquivos
+  if(fileName){
+    const localPath = path.join(process.cwd(), 'public', 'palicons', fileName);
+    if(fs.existsSync(localPath)){
+      const buf = fs.readFileSync(localPath);
+      return new NextResponse(buf, {
+        headers: { 'Content-Type': 'image/png', 'Cache-Control':'public, max-age=86400, immutable' }
+      });
+    }
+  }
+
+  // 2. Fallback externo só se não tiver local (Terraria novo)
   const urls = [
+    `https://paldb.cc/images/pals/${key}.png`,
+    `https://paldb.cc/images/pals/${key}_1.png`,
     `https://palworld.gg/images/pals/${key}.png`,
-    `https://palworld.gg/_next/image?url=%2Fimages%2Fpals%2F${key}.png&w=256&q=75`,
   ];
 
   for(const url of urls){
@@ -16,10 +32,7 @@ export async function GET(req: Request) {
       if(res.ok){
         const buf = await res.arrayBuffer();
         return new NextResponse(buf, {
-          headers: {
-            'Content-Type': 'image/png',
-            'Cache-Control':'public, max-age=86400'
-          }
+          headers: { 'Content-Type': 'image/png', 'Cache-Control':'public, max-age=86400' }
         });
       }
     }catch{}
