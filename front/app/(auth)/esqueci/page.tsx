@@ -1,17 +1,28 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { authClient } from "../login/types/cliente"; // <-- ADICIONA
 
 export default function EsqueciSenha(){
-  const [email,setEmail] = useState(""); const [loading,setLoading]=useState(false); const [ok,setOk]=useState(false);
+  const [email,setEmail] = useState("");
+  const [loading,setLoading]=useState(false);
+  const [ok,setOk]=useState(false);
+
   const handle = async (e:any)=>{
-    e.preventDefault(); setLoading(true);
-    const res = await fetch("http://localhost:8081/auth/login/esqueci-senha",{
-      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({email})
-    });
-    setLoading(false);
-    if(res.ok) setOk(true);
+    e.preventDefault();
+    setLoading(true);
+    try{
+      // AQUI É A MUDANÇA - usa seu ForgotRequest da foto
+      await authClient.forgot({ email });
+      setOk(true);
+    }catch(err:any){
+      // por segurança a gente sempre mostra OK mesmo se email não existir
+      setOk(true);
+    }finally{
+      setLoading(false);
+    }
   }
+
   return(
     <div className="min-h-screen flex items-center justify-center bg-emerald-950 p-4">
       <div className="w-full max-w-md bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[24px] p-8">

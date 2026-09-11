@@ -1,21 +1,201 @@
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#050d1b;--green:#39df82;--white:#f5f7fb;--gray:#aab5c7}
-body{min-height:100vh;font-family:Arial,sans-serif;color:var(--white);background:var(--bg)}
-.page{min-height:100vh;padding:30px}
-h1{text-align:center;font-size:50px;margin-bottom:28px}
-h1 span{color:var(--green)}
-.stage{width:min(1180px,100%);min-height:650px;margin:auto;padding:24px;border:2px solid rgba(35,135,255,.85);border-radius:20px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
-.magic-area{position:relative;min-height:590px;border-radius:16px;background:#061831;display:flex;align-items:center;justify-content:center;flex-direction:column}
-.character-wrap{width:340px;height:510px}
-.bunny,.bunny-video{width:100%;height:100%;object-fit:cover;border-radius:150px 150px 30px 30px}
-.floor-glow{width:310px;height:45px;margin-top:10px;border-radius:50%;background:rgba(57,223,130,.20);filter:blur(12px)}
-.login-area{display:flex;align-items:center;justify-content:center}
-.login-card{width:min(470px,100%);padding:40px;border-radius:20px;border:1px solid rgba(90,155,255,.55);background:#112847}
-.login-card h2{text-align:center;font-size:30px;margin-bottom:8px}
-.login-card>p{text-align:center;color:var(--gray);font-size:14px;margin-bottom:20px}
-form{display:flex;flex-direction:column}
-form>label{font-size:13px;font-weight:bold;margin-bottom:6px}
-input{width:100%;height:46px;padding:0 14px;margin-bottom:16px;color:white;background:#071426;border:1px solid #34557e;border-radius:8px;outline:none}
-.enter{height:50px;border:0;border-radius:8px;background:var(--green);color:#06150d;font-weight:800;cursor:pointer}
-.register{text-align:center;margin-top:18px;color:var(--gray);font-size:13px}
-.register a{color:var(--green);text-decoration:none}
+/* CONTAINER PRINCIPAL E FUNDO */
+.page {
+  min-height: 100vh;
+  background-color: #030811;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.main-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* PAINEL ESQUERDO COM A ILUSTRAÇÃO */
+.magic-card {
+  width: 380px;
+  background: #091526;
+  border: 1px solid #142843;
+  border-radius: 24px;
+  padding: 32px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* MOLDURA DE ARCO BRANCA */
+.arch-frame {
+  width: 100%;
+  height: 380px;
+  background: #ffffff;
+  border-radius: 180px 180px 32px 32px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.character-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bunny-video {
+  width: 100%;
+  height: 95%;
+  object-fit: contain;
+}
+
+/* BOTÃO INFERIOR */
+.badge-btn {
+  margin-top: 18px;
+  background: #062319;
+  border: 1px solid #39df82;
+  color: #39df82;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 22px;
+  border-radius: 20px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 15px rgba(57, 223, 130, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.badge-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(57, 223, 130, 0.4);
+}
+
+/* PAINEL DIREITO */
+.right-panel {
+  flex: 1;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+}
+
+/* CARD BLOQUEADO */
+.locked-card {
+  width: 100%;
+  background: #0c1c33;
+  border: 1px solid #1e3b66;
+  border-radius: 16px;
+  padding: 40px 24px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.locked-card h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.locked-message {
+  color: #8da2c0;
+  font-size: 14px;
+}
+
+/* CARD DO FORMULÁRIO DE LOGIN */
+.login-card {
+  width: 100%;
+  background: #0c1c33;
+  border: 1px solid #1e3b66;
+  border-radius: 20px;
+  padding: 32px 28px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.login-card h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #ffffff;
+}
+
+.subtitle {
+  color: #8da2c0;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.login-card label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #cad8e8;
+  margin-bottom: 6px;
+}
+
+.login-card input {
+  width: 100%;
+  background: #06101e;
+  border: 1px solid #182e4d;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #ffffff;
+  font-size: 14px;
+  margin-bottom: 16px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.login-card input:focus {
+  border-color: #3b82f6;
+}
+
+.enter-btn {
+  width: 100%;
+  background: #22c55e;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.2s;
+}
+
+.enter-btn:hover {
+  background: #16a34a;
+}
+
+.enter-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.register, .forgot {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #8da2c0;
+}
+
+.register a, .forgot {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+.register a:hover, .forgot:hover {
+  text-decoration: underline;
+}
