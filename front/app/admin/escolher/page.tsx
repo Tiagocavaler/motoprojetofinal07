@@ -1,65 +1,88 @@
-"use client"; // Página de cliente pra usar Supabase
+"use client";
 import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabase"; // Conexão com banco
-import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
 
-export default function EscolherProduto() {
-  // Guarda os 413 Pals do Supabase
+export default function EscolherPage() {
   const [produtos, setProdutos] = useState<any[]>([]);
-  const [busca, setBusca] = useState(""); // Pra filtrar
+  const [itensPublic, setItensPublic] = useState<any[]>([]);
+  const [busca, setBusca] = useState("");
+  const [filtro, setFiltro] = useState("todos");
 
-  // Carrega todos do banco - SELECT * FROM produtos
   const carregar = async () => {
     const { data } = await supabase.from("produtos").select("*").order("nome");
     if (data) setProdutos(data);
   };
 
-  useEffect(() => { carregar(); }, []); // Roda quando entra na página
-
-  // FUNÇÃO PRINCIPAL DO TCC: Listar produto na loja
-  const listarProduto = async (p: any) => {
-    // Pede preço e quantidade pro admin - seu fluxo
-    const preco = prompt(`Qual preço para ${p.nome}?`, p.preco || "99.90");
-    if (!preco) return;
-    const qtd = prompt(`Quantas unidades de ${p.nome}?`, "10");
-    if (!qtd) return;
-
-    // UPDATE que faz aparecer no catálogo - o pulo do gato
-    // O catálogo só mostra WHERE ativo_na_loja = true
-    const { error } = await supabase.from("produtos").update({
-      preco: parseFloat(preco),
-      estoque: parseInt(qtd),
-      ativo_na_loja: true // ESSA LINHA FAZ APARECER NO CATÁLOGO
-    }).eq("id", p.id);
-
-    if (!error) {
-      alert(`${p.nome} LISTADO com sucesso! Vai aparecer no /catalogo`);
-      carregar();
+  const carregarPublic = async () => {
+    try {
+      const res = await fetch("/api/itens");
+      const data = await res.json();
+      setItensPublic(data || []);
+    } catch (e) {
+      setItensPublic([]);
     }
   };
 
-  const filtrados = produtos.filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()));
+  useEffect(() => {
+    carregar();
+    carregarPublic();
+  }, []);
+
+  const cadastrarPublic = async (item: any, preco: string, qtd: string) => {
+    const { error } = await supabase.from("produtos").insert({
+      nome: item.nome,
+      imagem: item.arquivo,
+      preco: parseFloat(preco),
+      estoque: parseInt(qtd),
+      ativo_na_loja: true,
+      categoria: item.categoria
+    });
+    if (error) alert(error.message);
+    else carregar();
+  };
+
+  const filtradosPals = produtos.filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()));
+
+  const filtradosPublic = itensPublic.filter((i: any) => {
+    const matchBusca = i.nome.toLowerCase().includes(busca.toLowerCase());
+    const matchCat = filtro === "todos" || i.categoria === filtro;
+    return matchBusca && matchCat;
+  });
+
+  const jaExiste = (arquivo: string) => produtos.some(p => p.imagem === arquivo);
 
   return (
-    <div className="min-h-screen bg-[#0B1325] p-8 text-white">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-black text-[#E2C9A1]">Escolher Produto para Loja - 413 Pals</h1>
-        <Link href="/catalogo" className="bg-[#E2C9A1] text-black px-4 py-2 rounded-lg font-bold">Ver Catálogo</Link>
+    <div className="min-h-screen bg-[#0B1325] p-6 text-white">
+      <h1 className="text-2xl font-bold text-[#E2C9A1]">Admin - Escolha o Pal e Liste</h1>
+
+      <input
+        value={busca}
+        onChange={e=>setBusca(e.target.value)}
+        placeholder="Buscar Pal..."
+        className="w-full bg-[#162342] p-4 rounded-xl mt-4 border border-white/10"
+      />
+
+      <div className="flex gap-2 mt-4 flex-wrap">
+        {['todos','pal','arma','armadura','escudo','municao','esfera'].map(c => (
+          <button key={c} onClick={()=>setFiltro(c)} className={`px-4 py-2 rounded-full text-xs font-bold ${filtro===c? 'bg-[#E2C9A1] text-black' : 'bg-[#162342] border border-white/10'}`}>
+            {c.toUpperCase()}
+          </button>
+        ))}
       </div>
 
-      <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Busque Anubis, Jetragon..." className="w-full bg-[#162342] p-4 rounded-xl border border-white/10 mb-6" />
+      <h2 className="mt-8 font-bold text-[#E2C9A1]">Pals do Banco ({filtradosPals.length})</h2>
 
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        {filtrados.slice(0, 120).map(p => (
-          <div key={p.id} className={`p-3 rounded-xl border ${p.ativo_na_loja? "bg-green-900/30 border-green-500" : "bg-[#162342] border-white/10"}`}>
-            <img src={p.imagem} className="w-full h-20 object-contain" />
-            <p className="text-xs mt-2 truncate text-[#E2C9A1]">{p.nome}</p>
-            <p className="text-[10px]">Estoque: {p.estoque} | R$ {p.preco}</p>
-            {p.ativo_na_loja? (
-              <span className="text-[10px] text-green-400 font-bold">✅ JÁ NA LOJA</span>
-            ) : (
-              <button onClick={()=>listarProduto(p)} className="w-full mt-2 bg-[#E2C9A1] text-black py-2 rounded text-xs font-bold">CLIQUE PARA LISTAR</button>
-            )}
+      <h2 className="mt-10 font-bold text-[#E2C9A1]">Itens da Public/ ({filtradosPublic.length}) - NOVO</h2>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-3">
+        {filtradosPublic.map((item: any) => (
+          <div key={item.arquivo} className="bg-[#162342] p-3 rounded-xl border border-white/10">
+            <img src={item.arquivo} className="w-full h-20 object-contain" alt={item.nome} />
+            <p className="text-xs mt-2 truncate">{item.nome}</p>
+            <p className="text-[10px] text-zinc-400">{item.categoria}</p>
+            {jaExiste(item.arquivo)?
+              <span className="text-[10px] text-green-400">✅ NA LOJA</span> :
+              <button onClick={()=>{ const preco=prompt("Preço?","99.90"); const qtd=prompt("Qtd?","10"); if(preco&&qtd) cadastrarPublic(item, preco, qtd)}} className="w-full mt-2 bg-[#E2C9A1] text-black py-2 rounded text-xs font-bold">Liberar p/ Loja</button>
+            }
           </div>
         ))}
       </div>

@@ -1,41 +1,66 @@
-'use client';
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Header from './components/Header';
-import Footer from './components/Footer';
+'use client'; // Diz que roda no navegador, precisa pra usar useState e supabase
+import { useState, FormEvent } from 'react'; // Hooks pra controlar estado e formulário
+import { useRouter } from 'next/navigation'; // Hook pra navegar entre rotas tipo /home
+import Link from 'next/link'; // Link do Next sem reload
+import Header from './components/Header'; // Header que tem botão de login
+import Footer from './components/Footer'; // Footer
+import { supabase } from '@/lib/supabaseClient'; // Client do Supabase com sua URL e KEY
 
 export default function Page() {
-  const router = useRouter();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [loginLiberado, setLoginLiberado] = useState(false);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginSenha, setLoginSenha] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [registerLiberado, setRegisterLiberado] = useState(false);
-  const [registerForm, setRegisterForm] = useState({ nome: '', email: '', senha: '', confirma: '' });
-  const [registerLoading, setRegisterLoading] = useState(false);
+  const router = useRouter(); // Instancia o roteador
+  const [isLoginOpen, setIsLoginOpen] = useState(false); // Controla se modal de login tá aberto
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false); // Controla modal de registro
+  const [loginLiberado, setLoginLiberado] = useState(false); // Easter egg da coelhinha, libera o form
+  const [loginEmail, setLoginEmail] = useState(''); // Estado do input email
+  const [loginSenha, setLoginSenha] = useState(''); // Estado do input senha
+  const [loginLoading, setLoginLoading] = useState(false); // Loading do botão ENTRAR
+  const [registerLiberado, setRegisterLiberado] = useState(false); // Libera form de registro
+  const [registerForm, setRegisterForm] = useState({ nome: '', email: '', senha: '', confirma: '' }); // Form de cadastro
+  const [registerLoading, setRegisterLoading] = useState(false); // Loading do cadastro
 
+  // Função de LOGIN REAL com Supabase
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoginLoading(true);
+    e.preventDefault(); // Não recarrega a página
+    setLoginLoading(true); // Ativa loading
     try {
-      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginEmail, password: loginSenha, senha: loginSenha }), });
-      const text = await res.text(); let data: any; try { data = JSON.parse(text); } catch { data = { raw: text }; }
-      if (res.ok) { const token = data.token || data.accessToken; if (token) localStorage.setItem('token', token); setIsLoginOpen(false); router.push('/home'); } 
-      else { alert('Falhou: ' + (data.message || text)); }
-    } catch { alert('Erro ao conectar'); } finally { setLoginLoading(false); }
+      // Tenta logar no Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginSenha,
+      });
+      if (error) throw error; // Se der erro joga pro catch
+      setIsLoginOpen(false); // Fecha modal
+      router.push('/home'); // Manda pra home logado
+    } catch (err: any) {
+      alert('Falhou: ' + err.message); // Mostra erro
+    } finally {
+      setLoginLoading(false); // Desativa loading
+    }
   };
+
+  // Função de CADASTRO REAL com Supabase
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (registerForm.senha !== registerForm.confirma) return alert('Senhas diferentes');
+    e.preventDefault(); // Não recarrega
+    if (registerForm.senha !== registerForm.confirma) return alert('Senhas diferentes'); // Valida senha
     setRegisterLoading(true);
     try {
-      const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: registerForm.nome, email: registerForm.email, password: registerForm.senha, senha: registerForm.senha }), });
-      const text = await res.text(); let data: any; try { data = JSON.parse(text); } catch { data = {}; }
-      if(!res.ok) throw new Error(data.message || text); alert('Conta criada!'); setIsRegisterOpen(false); setIsLoginOpen(true);
-    } catch (err: any) { alert(err.message); } finally { setRegisterLoading(false); }
+      const { data, error } = await supabase.auth.signUp({
+        email: registerForm.email,
+        password: registerForm.senha,
+        options: {
+          data: { nome: registerForm.nome } // Salva nome no metadata do user
+        }
+      });
+      if (error) throw error;
+      
+      alert('Conta criada! Agora pode logar. Se pedir confirmação, vai no Supabase > Authentication > Users e confirma o email.');
+      setIsRegisterOpen(false); // Fecha cadastro
+      setIsLoginOpen(true); // Abre login pra pessoa entrar
+    } catch (err: any) {
+      alert('Erro: ' + err.message);
+    } finally {
+      setRegisterLoading(false);
+    }
   };
 
   return (
@@ -98,7 +123,15 @@ export default function Page() {
                     <h2>Bem-vindo</h2><form onSubmit={handleLogin} className="modal-form">
                       <div className="form-group"><label>E-mail</label><input type="text" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required /></div>
                       <div className="form-group"><label>Senha</label><input type="password" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} required /></div>
+                      
+                      {/* BOTÃO ENTRAR - chama handleLogin que usa supabase.auth.signInWithPassword */}
                       <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loginLoading}>{loginLoading ? 'ENTRANDO...' : 'ENTRAR'}</button>
+                      
+                      {/* LINK QUE FALTAVA - ESQUECEU A SENHA - leva pra página /(auth)/esqueci que já existe */}
+                      <Link href="/esqueci" onClick={() => setIsLoginOpen(false)} style={{color: 'var(--accent-sand)', fontSize: '0.8rem', textAlign: 'right', display: 'block', textDecoration: 'none'}}>
+                        Esqueceu sua senha?
+                      </Link>
+
                       <a href="#" onClick={(e) => { e.preventDefault(); setIsLoginOpen(false); setIsRegisterOpen(true); }} style={{color: 'var(--accent-sand)', fontSize: '0.8rem', marginTop: '10px', display: 'block'}}>Não tem conta? Cadastre-se</a>
                     </form>
                   </div>

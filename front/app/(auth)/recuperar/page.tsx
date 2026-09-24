@@ -1,65 +1,36 @@
-// Força a rota a ser dinâmica - padrão da aula
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
-import { NextResponse } from "next/server";
+export default function AtualizarSenha(){
+  const [novaSenha, setNovaSenha] = useState(""); // Nova senha digitada
+  const [loading, setLoading] = useState(false); // Loading
+  const router = useRouter();
 
-// URL do seu backend Java/Spring - fica só no servidor, não expõe no client
-const BACKEND_URL = "http://localhost:8081/auth/login/recuperar-senha";
+  // O Supabase lê o #access_token da URL sozinho quando a página abre
+  useEffect(()=> {
+    supabase.auth.getSession(); // Força carregar a sessão de recuperação
+  },[]);
 
-type Body = {
-  token: string;
-  novaSenha: string;
-};
-
-export async function POST(req: Request) {
-  try {
-    const body = (await req.json()) as Body;
-    const { token, novaSenha } = body;
-
-    // 1. Validação - camada de apresentação -> API
-    if (!token || !novaSenha) {
-      return NextResponse.json(
-        { error: "Token e nova senha são obrigatórios." },
-        { status: 400 }
-      );
-    }
-
-    if (novaSenha.length < 6) {
-      return NextResponse.json(
-        { error: "A senha deve ter no mínimo 6 caracteres." },
-        { status: 400 }
-      );
-    }
-
-    // 2. Persistência - API Next.js -> Backend Java
-    const res = await fetch(BACKEND_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, novaSenha }),
-    });
-
-    const data = await res.json().catch(() => null);
-
-    // 3. Tratamento de erro vindo do backend
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: data?.message || data?.error || "Token inválido ou expirado." },
-        { status: res.status }
-      );
-    }
-
-    // 4. Sucesso - resposta padronizada
-    return NextResponse.json(
-      { message: "Senha alterada com sucesso!" },
-      { status: 200 }
-    );
-
-  } catch (error) {
-    console.error("Erro em /api/auth/forgot/reset:", error);
-    return NextResponse.json(
-      { error: "Erro interno ao redefinir a senha." },
-      { status: 500 }
-    );
+  const salvar = async (e:any) => {
+    e.preventDefault();
+    if(novaSenha.length < 6) return alert("Mínimo 6 caracteres");
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: novaSenha }); // Atualiza senha do user do token
+    setLoading(false);
+    if(error) return alert(error.message);
+    alert("Senha trocada! Faça login.");
+    router.push("/"); // Volta pra home com modal de login
   }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0B1325] p-4">
+      <form onSubmit={salvar} className="bg-[#162342] p-8 rounded-2xl w-full max-w-sm space-y-4">
+        <h1 className="text-white font-bold text-xl">Nova senha</h1>
+        <input value={novaSenha} onChange={e=>setNovaSenha(e.target.value)} type="password" placeholder="Nova senha" className="w-full p-3 rounded-lg bg-black/30 text-white" required />
+        <button disabled={loading} className="w-full bg-[#E2C9A1] text-black py-3 rounded-lg font-bold">{loading?"Salvando...":"Salvar nova senha"}</button>
+      </form>
+    </div>
+  )
 }

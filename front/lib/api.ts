@@ -1,6 +1,6 @@
-import { supabase } from './supabase'
+import { supabase } from './supabaseClient'
 
-// ===== PRODUTOS - SÓ O QUE ADMIN LIBEROU =====
+// ===== PRODUTOS - SÓ O QUE ADMIN LIBEROU (LOJA) =====
 export async function getProdutos() {
   const { data, error } = await supabase
    .from('produtos')
@@ -12,12 +12,23 @@ export async function getProdutos() {
   return data
 }
 
+// ===== ADMIN - VER TUDO MESMO DESATIVADO =====
+export async function getTodosProdutosAdmin() {
+  const { data, error } = await supabase
+   .from('produtos')
+   .select('*')
+   .order('nome')
+   .range(0, 2000)
+  if (error) throw error
+  return data
+}
+
 // ===== CARRINHO =====
 export async function getCarrinho() {
   const { data, error } = await supabase
    .from('carrinho')
    .select('*, produtos(*)')
-   .order('created_at', { ascending: false }) // era criado_em, no banco é created_at
+   .order('created_at', { ascending: false })
   if (error) throw error
   return data
 }
@@ -27,7 +38,7 @@ export async function addCarrinho(produto_id: string) {
    .from('carrinho')
    .select('*')
    .eq('produto_id', produto_id)
-   .maybeSingle() // maybeSingle pra não quebrar se não existir
+   .maybeSingle()
 
   if (existente) {
     const { data, error } = await supabase
@@ -47,13 +58,30 @@ export async function addCarrinho(produto_id: string) {
   }
 }
 
+export async function updateQuantidadeCarrinho(id: string, quantidade: number) {
+  if (quantidade <= 0) {
+    return removerCarrinho(id)
+  }
+  const { data, error } = await supabase
+   .from('carrinho')
+   .update({ quantidade })
+   .eq('id', id)
+   .select()
+  if (error) throw error
+  return data
+}
+
 export async function removerCarrinho(id: string) {
   const { error } = await supabase.from('carrinho').delete().eq('id', id)
   if (error) throw error
 }
 
 export async function limparCarrinho() {
-  const { error } = await supabase.from('carrinho').delete().gt('quantidade', 0)
+  // CORRIGIDO: jeito certo de limpar tudo
+  const { error } = await supabase
+   .from('carrinho')
+   .delete()
+   .neq('id', '00000000-0000-0000-0000-000000000000')
   if (error) throw error
 }
 
@@ -61,7 +89,7 @@ export async function limparCarrinho() {
 export async function criarPedido(total: number, itens: any[]) {
   const { data, error } = await supabase
    .from('pedidos')
-   .insert([{ total, itens, status: 'pendente' }]) // no banco é pendente, não aguardando_pagamento
+   .insert([{ total, itens, status: 'pendente' }])
    .select()
   if (error) throw error
   return data[0]
@@ -81,7 +109,7 @@ export async function getMeusPedidos() {
   const { data, error } = await supabase
    .from('pedidos')
    .select('*')
-   .order('created_at', { ascending: false }) // era criado_em
+   .order('created_at', { ascending: false })
   if (error) throw error
   return data
 }
